@@ -118,6 +118,21 @@
         }
         .mobile-btn-pill:hover { background: rgba(37, 99, 235, 0.25); }
 
+        .scan-btn-pill {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: #34d399;
+            border-radius: 20px;
+            padding: 5px 10px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .scan-btn-pill:hover { background: rgba(16, 185, 129, 0.25); }
+
         .banner {
             width: 100%;
             padding: 8px 12px;
@@ -719,6 +734,13 @@
     <div class="status-bar">
         <div class="bar-left">
             <span style="font-size: 0.72rem; font-weight: 700; letter-spacing: 1px; color: var(--text-dim);">LE32K6600G</span>
+            <button class="scan-btn-pill" onclick="autoDiscoverTv()" title="Automatically find TV IP on Wi-Fi">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="12" cy="12" r="9"></circle>
+                    <path d="M12 3a9 9 0 0 1 9 9"></path>
+                </svg>
+                <span id="scanBtnText">Find TV</span>
+            </button>
             <button class="mobile-btn-pill" onclick="openMobileModal()" title="Open on Mobile via QR / Wi-Fi">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
@@ -1055,8 +1077,11 @@
         <div id="pairingStartSection" style="display: flex; flex-direction: column; gap: 10px;">
             <div style="display: flex; gap: 8px;">
                 <input type="text" id="tvIpInput" class="search-input" value="192.168.0.107" placeholder="TV IP Address" style="background: #11141a; border: 1px solid #333d52; border-radius: 8px;">
-                <button class="m-btn m-btn-secondary" onclick="updateTvIp()" style="flex: 0 0 70px;">Save IP</button>
+                <button class="m-btn m-btn-secondary" onclick="updateTvIp()" style="flex: 0 0 70px;">Save</button>
             </div>
+            <button class="m-btn" style="background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #34d399;" onclick="autoDiscoverTv()">
+                Auto-Scan TV on Wi-Fi
+            </button>
             <div class="modal-actions">
                 <button class="m-btn m-btn-secondary" onclick="closePairingModal()">Close</button>
                 <button class="m-btn m-btn-primary" onclick="startPairingProcess()">Start Pairing</button>
@@ -1293,7 +1318,7 @@
                 dot.className = 'status-dot error';
                 text.textContent = 'Offline';
                 banner.className = 'banner banner-error active';
-                banner.textContent = data.last_error || 'Searching for TV at ' + data.tv_ip;
+                banner.innerHTML = (data.last_error || 'Searching for TV at ' + data.tv_ip) + ' | <a href="#" onclick="autoDiscoverTv(); return false;" style="color: #60a5fa; text-decoration: underline; font-weight: 700; margin-left: 6px;">Auto-Detect TV</a>';
             }
         } catch (err) {
             console.error('Failed to fetch status:', err);
@@ -1414,6 +1439,37 @@
             checkStatus();
         } catch (err) {
             alert('Failed to update IP: ' + err.message);
+        }
+    }
+
+    // Auto-Discover TV on Local Wi-Fi
+    async function autoDiscoverTv() {
+        triggerHaptic();
+        const scanBtnText = document.getElementById('scanBtnText');
+        if (scanBtnText) scanBtnText.textContent = 'Scanning...';
+        
+        const banner = document.getElementById('statusBanner');
+        banner.className = 'banner banner-warning active';
+        banner.textContent = 'Scanning local Wi-Fi for your Haier TV... Please wait.';
+
+        try {
+            const res = await fetch('/api/discover', { method: 'POST' });
+            const data = await res.json();
+            if (data.success && data.selected_ip) {
+                document.getElementById('tvIpInput').value = data.selected_ip;
+                banner.className = 'banner banner-warning active';
+                banner.textContent = data.message + ' - Reconnecting...';
+                alert(data.message + '\n\nConnecting to your TV automatically!');
+                checkStatus();
+            } else {
+                banner.className = 'banner banner-error active';
+                banner.textContent = data.message;
+                alert(data.message);
+            }
+        } catch (err) {
+            alert('Discovery request failed: ' + err.message);
+        } finally {
+            if (scanBtnText) scanBtnText.textContent = 'Find TV';
         }
     }
 

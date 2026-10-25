@@ -3,7 +3,12 @@ import os
 import sys
 import socket
 import logging
-from typing import Optional
+import subprocess
+import re
+import urllib.request
+import json
+import concurrent.futures
+from typing import Optional, List, Dict
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
@@ -199,6 +204,67 @@ class TVManager:
         self.connected = False
         self.needs_pairing = False
 
+def probe_single_ip(ip: str) -> Optional[Dict]:
+    # Check common Android TV / Google Cast ports
+    for port in [6466, 8008, 6467, 8009, 5555]:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(0.35)
+        try:
+            if s.connect_ex((ip, port)) == 0:
+                s.close()
+                name = "Haier Android TV"
+                try:
+                    url = f"http://{ip}:8008/setup/eureka_info?params=name"
+                    req = urllib.request.Request(url, headers={"User-Agent": "HaierRemoteDiscovery"})
+                    with urllib.request.urlopen(req, timeout=1.0) as resp:
+                        d = json.loads(resp.read().decode())
+                        if "name" in d and d["name"]:
+                            name = d["name"]
+                except Exception:
+                    pass
+                return {"ip": ip, "name": name, "port": port}
+        except Exception:
+            pass
+        finally:
+            s.close()
+    return None
+
+def scan_local_network_for_tvs() -> List[Dict]:
+    prefix = ".".join(LOCAL_LAN_IP.split(".")[:3]) + "."
+    found = []
+    
+    # 1. Prioritize current host IP
+    if tv_mgr.host:
+        curr = probe_single_ip(tv_mgr.host)
+        if curr:
+            found.append(curr)
+    
+    # 2. Check ARP table for other dynamic candidates
+    try:
+        out = subprocess.run(["arp", "-a"], capture_output=True, text=True).stdout
+        for line in out.splitlines():
+            m = re.search(r"(\d+\.\d+\.\d+\.\d+)\s+([0-9a-fA-F-]+)", line)
+            if m:
+                ip = m.group(1)
+                if ip.startswith(prefix) and ip != LOCAL_LAN_IP and ip != prefix + "1" and ip != prefix + "255":
+                    if not any(d["ip"] == ip for d in found):
+                        p = probe_single_ip(ip)
+                        if p:
+                            found.append(p)
+    except Exception:
+        pass
+
+    # 3. If still nothing found, sweep the subnet concurrently
+    if not found:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=60) as executor:
+            futs = {executor.submit(probe_single_ip, f"{prefix}{i}"): f"{prefix}{i}" for i in range(1, 255) if f"{prefix}{i}" != LOCAL_LAN_IP}
+            for f in concurrent.futures.as_completed(futs):
+                res = f.result()
+                if res and not any(d["ip"] == res["ip"] for d in found):
+                    found.append(res)
+
+    return found
+
 tv_mgr = TVManager(DEFAULT_TV_IP)
 
 # Request Models
@@ -307,6 +373,29 @@ async def update_ip(req: IpRequest):
     tv_mgr.set_host(req.ip)
     asyncio.create_task(tv_mgr.init_connection())
     return {"success": True, "tv_ip": tv_mgr.host}
+
+@app.post("/api/discover")
+async def discover_tvs_endpoint():
+    loop = asyncio.get_event_loop()
+    devices = await loop.run_in_executor(None, scan_local_network_for_tvs)
+    if devices:
+        # Auto-select the first discovered TV
+        best = devices[0]
+        tv_mgr.set_host(best["ip"])
+        asyncio.create_task(tv_mgr.init_connection())
+        return {
+            "success": True,
+            "message": f"Found TV ({best['name']}) at {best['ip']}",
+            "selected_ip": best["ip"],
+            "devices": devices
+        }
+    else:
+        return {
+            "success": False,
+            "message": "No active Smart TV found. Please make sure TV is turned ON and on the same Wi-Fi.",
+            "selected_ip": tv_mgr.host,
+            "devices": []
+        }
 
 # Serve static frontend and PWA root files
 STATIC_DIR = os.path.join(BASE_DIR, "static")
