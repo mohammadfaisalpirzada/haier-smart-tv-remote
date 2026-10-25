@@ -212,6 +212,9 @@ class TextRequest(BaseModel):
 class LaunchRequest(BaseModel):
     app: str
 
+class CharRequest(BaseModel):
+    char: str
+
 class PairConfirmRequest(BaseModel):
     code: str
 
@@ -267,6 +270,22 @@ async def send_text(req: TextRequest):
     try:
         await tv_mgr.send_text(req.text)
         return {"success": True, "text": req.text}
+    except Exception as e:
+        return JSONResponse(status_code=400, content={"success": False, "error": str(e)})
+
+@app.post("/api/type_char")
+async def type_char(req: CharRequest):
+    ch = req.char
+    try:
+        if ch in ("\b", "BACKSPACE", "DEL"):
+            await tv_mgr.send_key("KEYCODE_DEL")
+        elif ch in ("\n", "ENTER"):
+            await tv_mgr.send_key("KEYCODE_ENTER")
+        elif ch in (" ", "SPACE"):
+            await tv_mgr.send_key("KEYCODE_SPACE")
+        else:
+            await tv_mgr.send_text(ch)
+        return {"success": True, "char": ch}
     except Exception as e:
         return JSONResponse(status_code=400, content={"success": False, "error": str(e)})
 

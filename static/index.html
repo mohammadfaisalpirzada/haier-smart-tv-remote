@@ -58,7 +58,7 @@
             flex-direction: column;
             align-items: center;
             width: 100%;
-            max-width: 330px;
+            max-width: 340px;
         }
 
         /* Top status bar */
@@ -413,68 +413,183 @@
             gap: 10px;
         }
 
-        /* Search / Typing bar */
-        .search-row {
+        /* Keyboard & Typing Section */
+        .kb-section {
             display: flex;
+            flex-direction: column;
             gap: 8px;
-            background: #181c24;
+            background: #141720;
             border: 1px solid var(--btn-border);
-            border-radius: 12px;
-            padding: 4px;
+            border-radius: 18px;
+            padding: 10px;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
         }
 
-        .search-input {
+        .kb-tabs-bar {
+            display: flex;
+            gap: 6px;
+            background: #0f1218;
+            padding: 3px;
+            border-radius: 12px;
+            border: 1px solid #28303f;
+        }
+
+        .kb-tab-btn {
             flex: 1;
             background: transparent;
             border: none;
-            padding: 8px 10px;
-            color: #ffffff;
-            font-size: 0.82rem;
-            outline: none;
-        }
-
-        .search-btn {
-            background: #2563eb;
-            color: #ffffff;
-            border: none;
-            border-radius: 8px;
-            padding: 8px 14px;
-            font-size: 0.78rem;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        /* Number Pad Drawer */
-        .numpad-toggle {
-            background: transparent;
-            border: 1px dashed var(--btn-border);
             color: var(--text-dim);
-            border-radius: 8px;
+            font-size: 0.74rem;
+            font-weight: 700;
             padding: 6px;
-            font-size: 0.72rem;
-            font-weight: 600;
+            border-radius: 9px;
             cursor: pointer;
-            width: 100%;
+            transition: all 0.15s;
             text-align: center;
         }
-        .numpad-grid {
+
+        .kb-tab-btn.active {
+            background: #252b37;
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        }
+
+        /* Live Typing Input Box */
+        .qwerty-display-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            background: #0b0d13;
+            border: 1px solid #323b4c;
+            border-radius: 10px;
+            padding: 4px 8px;
+        }
+
+        .qwerty-display-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #ffffff;
+            font-size: 0.88rem;
+            font-weight: 600;
+            outline: none;
+            min-width: 0;
+        }
+
+        .qwerty-display-input::placeholder {
+            color: #556277;
+            font-size: 0.78rem;
+            font-weight: 400;
+        }
+
+        .qwerty-btn-clear {
+            background: transparent;
+            border: none;
+            color: #717d91;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 4px 6px;
+        }
+        .qwerty-btn-clear:hover { color: #ff5252; }
+
+        .qwerty-btn-send {
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.74rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+        .qwerty-btn-send:hover { background: #1d4ed8; }
+
+        /* QWERTY Virtual Keyboard Layout */
+        .qwerty-board {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            width: 100%;
+        }
+
+        .kb-row {
+            display: flex;
+            justify-content: center;
+            gap: 3.5px;
+            width: 100%;
+        }
+
+        .k-key {
+            flex: 1;
+            height: 38px;
+            background: #222733;
+            border: 1px solid #353d4e;
+            border-radius: 6px;
+            color: #f1f5f9;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.08s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            touch-action: manipulation;
+        }
+
+        .k-key:hover { background: #2e3545; border-color: #505c75; }
+        .k-key:active { background: #3b465d; transform: scale(0.92); }
+
+        .k-key-special {
+            background: #181d26;
+            color: #94a3b8;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+        .k-key-special:hover { background: #232936; color: #fff; }
+
+        .k-key-shift { flex: 1.3; }
+        .k-key-shift.active {
+            background: #2563eb !important;
+            color: #ffffff !important;
+            border-color: #3b82f6 !important;
+        }
+
+        .k-key-backspace { flex: 1.3; }
+        .k-key-sym { flex: 1.3; }
+        .k-key-space { flex: 4; font-size: 0.75rem; letter-spacing: 1px; }
+        .k-key-enter {
+            background: #1e3a8a;
+            border-color: #2563eb;
+            color: #ffffff;
+            flex: 2;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .k-key-enter:hover { background: #2563eb; }
+
+        /* Number Pad Drawer */
+        .numpad-drawer {
             display: none;
             grid-template-columns: repeat(3, 1fr);
             gap: 8px;
             margin-top: 4px;
         }
-        .numpad-grid.open { display: grid; }
+        .numpad-drawer.active { display: grid; }
 
         .num-btn {
             background: var(--btn-matte);
             border: 1px solid var(--btn-border);
             color: #fff;
             border-radius: 10px;
-            padding: 9px;
-            font-size: 0.95rem;
+            padding: 10px;
+            font-size: 1rem;
             font-weight: 700;
             cursor: pointer;
         }
+        .num-btn:hover { background: var(--btn-matte-active); }
 
         .haier-bottom-brand {
             text-align: center;
@@ -644,7 +759,7 @@
                 <svg width="22" height="22" viewBox="0 0 24 24">
                     <circle cx="6" cy="12" r="2.2" fill="#4285F4"/>
                     <circle cx="11.5" cy="8.5" r="2.5" fill="#EA4335"/>
-                    <circle cx="11.5" cy="15.5" r="2.5" fill="#34A853"/>
+                    <circle cx="11.5" cy="8.5" r="2.5" fill="#34A853"/>
                     <circle cx="18" cy="12" r="3.2" fill="#FBBC05"/>
                 </svg>
             </button>
@@ -667,7 +782,7 @@
             <button class="app-btn app-btn-youtube" onclick="triggerHaptic(); launchApp('https://www.youtube.com')" title="Launch YouTube">
                 <div style="display: flex; align-items: center; gap: 5px;">
                     <svg width="26" height="19" viewBox="0 0 68 48">
-                        <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="#FF0000"/>
+                        <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="#FF0000"/>
                         <polygon points="45,24 27,14 27,34" fill="#FFFFFF"/>
                     </svg>
                     <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 800; font-size: 0.95rem; color: #212121; letter-spacing: -0.5px;">YouTube</span>
@@ -817,16 +932,62 @@
             </button>
         </div>
 
-        <!-- Row 8: Send Text to TV Search -->
-        <div class="search-row">
-            <input type="text" id="tvTextInput" class="search-input" placeholder="Type text to send to TV..." onkeydown="if(event.key==='Enter') sendCustomText()">
-            <button class="search-btn" onclick="triggerHaptic(); sendCustomText()">Send</button>
-        </div>
+        <!-- Row 8: Dedicated QWERTY Keyboard & Typing Suite -->
+        <div class="kb-section">
+            <div class="kb-tabs-bar">
+                <button id="tabQwerty" class="kb-tab-btn active" onclick="switchKeyboardTab('qwerty')">QWERTY Keyboard</button>
+                <button id="tabNumbers" class="kb-tab-btn" onclick="switchKeyboardTab('numbers')">Numbers [0-9]</button>
+            </div>
 
-        <!-- Row 9: Expandable Number Pad -->
-        <div>
-            <button class="numpad-toggle" onclick="toggleNumPad()">Number Keys [0-9]</button>
-            <div id="numpadGrid" class="numpad-grid">
+            <!-- Live Typing Display -->
+            <div class="qwerty-display-row">
+                <input type="text" id="kbDisplayInput" class="qwerty-display-input" placeholder="Type text or use on-screen keys..." autocomplete="off">
+                <button class="qwerty-btn-clear" onclick="clearLiveText()" title="Clear text">CLR</button>
+                <button class="qwerty-btn-send" onclick="sendFullText()" title="Send to TV Search">Send</button>
+            </div>
+
+            <!-- On-Screen QWERTY Keyboard -->
+            <div id="qwertyBoard" class="qwerty-board">
+                <!-- Numbers Row -->
+                <div class="kb-row">
+                    <button class="k-key" onclick="pressChar('1')">1</button>
+                    <button class="k-key" onclick="pressChar('2')">2</button>
+                    <button class="k-key" onclick="pressChar('3')">3</button>
+                    <button class="k-key" onclick="pressChar('4')">4</button>
+                    <button class="k-key" onclick="pressChar('5')">5</button>
+                    <button class="k-key" onclick="pressChar('6')">6</button>
+                    <button class="k-key" onclick="pressChar('7')">7</button>
+                    <button class="k-key" onclick="pressChar('8')">8</button>
+                    <button class="k-key" onclick="pressChar('9')">9</button>
+                    <button class="k-key" onclick="pressChar('0')">0</button>
+                </div>
+
+                <!-- Row 1 (Q - P) -->
+                <div class="kb-row" id="kbRow1">
+                    <!-- Populated dynamically via renderQwerty() -->
+                </div>
+
+                <!-- Row 2 (A - L) -->
+                <div class="kb-row" id="kbRow2">
+                    <!-- Populated dynamically via renderQwerty() -->
+                </div>
+
+                <!-- Row 3 (Shift, Z - M, Backspace) -->
+                <div class="kb-row" id="kbRow3">
+                    <!-- Populated dynamically via renderQwerty() -->
+                </div>
+
+                <!-- Row 4 (Symbols, Space, Enter) -->
+                <div class="kb-row">
+                    <button id="btnSymToggle" class="k-key k-key-special k-key-sym" onclick="toggleSymbols()">?123</button>
+                    <button class="k-key k-key-space" onclick="pressSpace()">SPACE</button>
+                    <button class="k-key" style="flex: 0.8;" onclick="pressChar('.')">.</button>
+                    <button class="k-key k-key-enter" onclick="pressEnter()">ENTER</button>
+                </div>
+            </div>
+
+            <!-- Standalone Number Pad Drawer -->
+            <div id="numbersBoard" class="numpad-drawer">
                 <button class="num-btn" onclick="triggerHaptic(); sendKey('1')">1</button>
                 <button class="num-btn" onclick="triggerHaptic(); sendKey('2')">2</button>
                 <button class="num-btn" onclick="triggerHaptic(); sendKey('3')">3</button>
@@ -909,6 +1070,183 @@
     let needsPairing = false;
     let localLanIp = '192.168.0.104';
 
+    // QWERTY State
+    let isShiftActive = false;
+    let isSymbolsActive = false;
+
+    const row1Letters = ['q','w','e','r','t','y','u','i','o','p'];
+    const row2Letters = ['a','s','d','f','g','h','j','k','l'];
+    const row3Letters = ['z','x','c','v','b','n','m'];
+
+    const row1Symbols = ['@','#','$','%','&','*','-','+','(',')'];
+    const row2Symbols = ['!','"','\'',':',';','/','_','=','~'];
+    const row3Symbols = ['<','>','[',']','{','}','?'];
+
+    function renderQwerty() {
+        const r1 = document.getElementById('kbRow1');
+        const r2 = document.getElementById('kbRow2');
+        const r3 = document.getElementById('kbRow3');
+
+        const letters1 = isSymbolsActive ? row1Symbols : row1Letters;
+        const letters2 = isSymbolsActive ? row2Symbols : row2Letters;
+        const letters3 = isSymbolsActive ? row3Symbols : row3Letters;
+
+        // Row 1
+        r1.innerHTML = letters1.map(ch => {
+            const display = isShiftActive && !isSymbolsActive ? ch.toUpperCase() : ch;
+            return `<button class="k-key" onclick="pressChar('${display}')">${display}</button>`;
+        }).join('');
+
+        // Row 2
+        r2.innerHTML = letters2.map(ch => {
+            const display = isShiftActive && !isSymbolsActive ? ch.toUpperCase() : ch;
+            return `<button class="k-key" onclick="pressChar('${display}')">${display}</button>`;
+        }).join('');
+
+        // Row 3
+        const shiftBtn = `<button class="k-key k-key-special k-key-shift ${isShiftActive ? 'active' : ''}" onclick="toggleShift()">${isShiftActive ? 'CAPS' : 'shift'}</button>`;
+        const backspaceBtn = `<button class="k-key k-key-special k-key-backspace" onclick="pressBackspace()">DEL</button>`;
+        
+        const row3Keys = letters3.map(ch => {
+            const display = isShiftActive && !isSymbolsActive ? ch.toUpperCase() : ch;
+            return `<button class="k-key" onclick="pressChar('${display}')">${display}</button>`;
+        }).join('');
+
+        r3.innerHTML = shiftBtn + row3Keys + backspaceBtn;
+    }
+
+    function toggleShift() {
+        triggerHaptic();
+        isShiftActive = !isShiftActive;
+        renderQwerty();
+    }
+
+    function toggleSymbols() {
+        triggerHaptic();
+        isSymbolsActive = !isSymbolsActive;
+        document.getElementById('btnSymToggle').textContent = isSymbolsActive ? 'ABC' : '?123';
+        renderQwerty();
+    }
+
+    // Switch between QWERTY and Numbers tab
+    function switchKeyboardTab(tab) {
+        triggerHaptic();
+        const tabQ = document.getElementById('tabQwerty');
+        const tabN = document.getElementById('tabNumbers');
+        const qBoard = document.getElementById('qwertyBoard');
+        const nBoard = document.getElementById('numbersBoard');
+
+        if (tab === 'qwerty') {
+            tabQ.classList.add('active');
+            tabN.classList.remove('active');
+            qBoard.style.display = 'flex';
+            nBoard.classList.remove('active');
+        } else {
+            tabN.classList.add('active');
+            tabQ.classList.remove('active');
+            qBoard.style.display = 'none';
+            nBoard.classList.add('active');
+        }
+    }
+
+    // Character Press on QWERTY
+    async function pressChar(ch) {
+        triggerHaptic();
+        const input = document.getElementById('kbDisplayInput');
+        input.value += ch;
+
+        // Send character directly to TV
+        try {
+            await fetch('/api/type_char', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ char: ch })
+            });
+        } catch (err) {
+            console.error('Error sending char:', err);
+        }
+    }
+
+    // Spacebar Press
+    async function pressSpace() {
+        triggerHaptic();
+        const input = document.getElementById('kbDisplayInput');
+        input.value += ' ';
+        try {
+            await fetch('/api/type_char', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ char: ' ' })
+            });
+        } catch (err) {
+            console.error('Error sending space:', err);
+        }
+    }
+
+    // Backspace Press
+    async function pressBackspace() {
+        triggerHaptic();
+        const input = document.getElementById('kbDisplayInput');
+        if (input.value.length > 0) {
+            input.value = input.value.slice(0, -1);
+        }
+        try {
+            await fetch('/api/type_char', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ char: 'DEL' })
+            });
+        } catch (err) {
+            console.error('Error sending del:', err);
+        }
+    }
+
+    // Enter / Search Press
+    async function pressEnter() {
+        triggerHaptic();
+        try {
+            await fetch('/api/type_char', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ char: 'ENTER' })
+            });
+        } catch (err) {
+            console.error('Error sending enter:', err);
+        }
+    }
+
+    // Clear live input display
+    function clearLiveText() {
+        triggerHaptic();
+        document.getElementById('kbDisplayInput').value = '';
+    }
+
+    // Send full text string at once
+    async function sendFullText() {
+        triggerHaptic();
+        const input = document.getElementById('kbDisplayInput');
+        const text = input.value.trim();
+        if (!text) return;
+        try {
+            await fetch('/api/text', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: text })
+            });
+        } catch (err) {
+            console.error('Error sending text:', err);
+        }
+    }
+
+    // Listen for Enter key on live input box
+    document.getElementById('kbDisplayInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            sendFullText();
+            pressEnter();
+        }
+    });
+
     // Register Service Worker for PWA
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -918,7 +1256,7 @@
         });
     }
 
-    // Touch haptic feedback for physical feel
+    // Touch haptic feedback
     function triggerHaptic() {
         if (navigator.vibrate) {
             navigator.vibrate(25);
@@ -990,28 +1328,6 @@
         } catch (err) {
             console.error('Error launching app:', err);
         }
-    }
-
-    // Send Text to TV Search
-    async function sendCustomText() {
-        const input = document.getElementById('tvTextInput');
-        const text = input.value.trim();
-        if (!text) return;
-        try {
-            await fetch('/api/text', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: text })
-            });
-            input.value = '';
-        } catch (err) {
-            console.error('Error sending text:', err);
-        }
-    }
-
-    // Toggle Number Pad
-    function toggleNumPad() {
-        document.getElementById('numpadGrid').classList.toggle('open');
     }
 
     // Mobile Modal
@@ -1101,7 +1417,7 @@
         }
     }
 
-    // Keyboard controls from PC
+    // Keyboard navigation from PC (when not typing in an input field)
     window.addEventListener('keydown', (e) => {
         if (e.target.tagName === 'INPUT') return;
 
@@ -1111,7 +1427,7 @@
             case 'ArrowLeft': e.preventDefault(); sendKey('DPAD_LEFT'); break;
             case 'ArrowRight': e.preventDefault(); sendKey('DPAD_RIGHT'); break;
             case 'Enter': e.preventDefault(); sendKey('DPAD_CENTER'); break;
-            case 'Escape':
+            case 'Escape': e.preventDefault(); sendKey('BACK'); break;
             case 'Backspace': e.preventDefault(); sendKey('BACK'); break;
             case 'Home': e.preventDefault(); sendKey('HOME'); break;
             case '+':
@@ -1124,6 +1440,8 @@
         }
     });
 
+    // Initialize QWERTY keyboard layout
+    renderQwerty();
     checkStatus();
     setInterval(checkStatus, 3000);
 </script>
