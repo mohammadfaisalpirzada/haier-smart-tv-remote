@@ -6,13 +6,13 @@
     <title>Haier Smart TV Remote</title>
     
     <!-- PWA Settings -->
-    <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#191c22">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="icon" type="image/png" sizes="192x192" href="/static/icon-192.png">
-    <link rel="apple-touch-icon" href="/static/icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="static/icon-192.png">
+    <link rel="apple-touch-icon" href="static/icon-192.png">
 
     <style>
         :root {
@@ -1180,7 +1180,11 @@
         const input = document.getElementById('kbDisplayInput');
         input.value += ch;
 
-        // Send character directly to TV
+        if (window.AndroidRemote && window.AndroidRemote.typeChar) {
+            window.AndroidRemote.typeChar(ch);
+            return;
+        }
+
         try {
             await fetch('/api/type_char', {
                 method: 'POST',
@@ -1197,6 +1201,12 @@
         triggerHaptic();
         const input = document.getElementById('kbDisplayInput');
         input.value += ' ';
+
+        if (window.AndroidRemote && window.AndroidRemote.typeChar) {
+            window.AndroidRemote.typeChar(' ');
+            return;
+        }
+
         try {
             await fetch('/api/type_char', {
                 method: 'POST',
@@ -1215,6 +1225,12 @@
         if (input.value.length > 0) {
             input.value = input.value.slice(0, -1);
         }
+
+        if (window.AndroidRemote && window.AndroidRemote.typeChar) {
+            window.AndroidRemote.typeChar('DEL');
+            return;
+        }
+
         try {
             await fetch('/api/type_char', {
                 method: 'POST',
@@ -1229,6 +1245,12 @@
     // Enter / Search Press
     async function pressEnter() {
         triggerHaptic();
+
+        if (window.AndroidRemote && window.AndroidRemote.typeChar) {
+            window.AndroidRemote.typeChar('ENTER');
+            return;
+        }
+
         try {
             await fetch('/api/type_char', {
                 method: 'POST',
@@ -1252,6 +1274,12 @@
         const input = document.getElementById('kbDisplayInput');
         const text = input.value.trim();
         if (!text) return;
+
+        if (window.AndroidRemote && window.AndroidRemote.sendText) {
+            window.AndroidRemote.sendText(text);
+            return;
+        }
+
         try {
             await fetch('/api/text', {
                 method: 'POST',
@@ -1288,38 +1316,53 @@
         }
     }
 
+    // Update Status UI from data object
+    function updateStatusUI(data) {
+        isConnected = !!data.connected;
+        needsPairing = !!data.needs_pairing;
+        if (data.local_ip) localLanIp = data.local_ip;
+
+        const dot = document.getElementById('statusDot');
+        const text = document.getElementById('statusText');
+        const banner = document.getElementById('statusBanner');
+
+        if (data.tv_ip) document.getElementById('tvIpInput').value = data.tv_ip;
+
+        if (isConnected) {
+            dot.className = 'status-dot connected';
+            text.textContent = 'Connected';
+            banner.className = 'banner';
+            banner.textContent = '';
+        } else if (needsPairing) {
+            dot.className = 'status-dot needs-pairing';
+            text.textContent = 'Pairing Required';
+            banner.className = 'banner banner-warning active';
+            banner.innerHTML = 'TV requires one-time pairing. <a href="#" onclick="openPairingModal(); return false;" style="color: inherit; text-decoration: underline; font-weight: 700;">Click here to pair</a>';
+        } else {
+            dot.className = 'status-dot error';
+            text.textContent = 'Offline';
+            banner.className = 'banner banner-error active';
+            banner.innerHTML = (data.last_error || 'Searching for TV at ' + (data.tv_ip || '')) + ' | <a href="#" onclick="autoDiscoverTv(); return false;" style="color: #60a5fa; text-decoration: underline; font-weight: 700; margin-left: 6px;">Auto-Detect TV</a>';
+        }
+    }
+
     // Fetch TV Status
     async function checkStatus() {
+        if (window.AndroidRemote && window.AndroidRemote.getStatus) {
+            try {
+                const raw = window.AndroidRemote.getStatus();
+                const data = JSON.parse(raw);
+                updateStatusUI(data);
+            } catch (err) {
+                console.error('AndroidRemote status error:', err);
+            }
+            return;
+        }
+
         try {
             const res = await fetch('/api/status');
             const data = await res.json();
-            
-            isConnected = data.connected;
-            needsPairing = data.needs_pairing;
-            if (data.local_ip) localLanIp = data.local_ip;
-
-            const dot = document.getElementById('statusDot');
-            const text = document.getElementById('statusText');
-            const banner = document.getElementById('statusBanner');
-
-            document.getElementById('tvIpInput').value = data.tv_ip || '192.168.0.107';
-
-            if (isConnected) {
-                dot.className = 'status-dot connected';
-                text.textContent = 'Connected';
-                banner.className = 'banner';
-                banner.textContent = '';
-            } else if (needsPairing) {
-                dot.className = 'status-dot needs-pairing';
-                text.textContent = 'Pairing Required';
-                banner.className = 'banner banner-warning active';
-                banner.innerHTML = 'TV requires one-time pairing. <a href="#" onclick="openPairingModal(); return false;" style="color: inherit; text-decoration: underline; font-weight: 700;">Click here to pair</a>';
-            } else {
-                dot.className = 'status-dot error';
-                text.textContent = 'Offline';
-                banner.className = 'banner banner-error active';
-                banner.innerHTML = (data.last_error || 'Searching for TV at ' + data.tv_ip) + ' | <a href="#" onclick="autoDiscoverTv(); return false;" style="color: #60a5fa; text-decoration: underline; font-weight: 700; margin-left: 6px;">Auto-Detect TV</a>';
-            }
+            updateStatusUI(data);
         } catch (err) {
             console.error('Failed to fetch status:', err);
         }
@@ -1327,6 +1370,12 @@
 
     // Send Key Press
     async function sendKey(key) {
+        triggerHaptic();
+        if (window.AndroidRemote && window.AndroidRemote.sendKey) {
+            window.AndroidRemote.sendKey(key);
+            return;
+        }
+
         try {
             const res = await fetch('/api/key', {
                 method: 'POST',
@@ -1344,6 +1393,12 @@
 
     // Launch App
     async function launchApp(appUrl) {
+        triggerHaptic();
+        if (window.AndroidRemote && window.AndroidRemote.launchApp) {
+            window.AndroidRemote.launchApp(appUrl);
+            return;
+        }
+
         try {
             await fetch('/api/launch', {
                 method: 'POST',
@@ -1382,6 +1437,12 @@
 
     async function startPairingProcess() {
         document.getElementById('modalDesc').textContent = 'Connecting to TV pairing service... Please watch your TV screen.';
+
+        if (window.AndroidRemote && window.AndroidRemote.startPairing) {
+            window.AndroidRemote.startPairing();
+            return;
+        }
+
         try {
             const res = await fetch('/api/pair/start', { method: 'POST' });
             const data = await res.json();
@@ -1407,6 +1468,11 @@
             return;
         }
 
+        if (window.AndroidRemote && window.AndroidRemote.sendPairCode) {
+            window.AndroidRemote.sendPairCode(code);
+            return;
+        }
+
         try {
             const res = await fetch('/api/pair/confirm', {
                 method: 'POST',
@@ -1429,6 +1495,14 @@
     async function updateTvIp() {
         const ip = document.getElementById('tvIpInput').value.trim();
         if (!ip) return;
+
+        if (window.AndroidRemote && window.AndroidRemote.setTvIp) {
+            window.AndroidRemote.setTvIp(ip);
+            alert('TV IP updated to ' + ip + '. Connecting...');
+            checkStatus();
+            return;
+        }
+
         try {
             await fetch('/api/ip', {
                 method: 'POST',
@@ -1452,6 +1526,11 @@
         banner.className = 'banner banner-warning active';
         banner.textContent = 'Scanning local Wi-Fi for your Haier TV... Please wait.';
 
+        if (window.AndroidRemote && window.AndroidRemote.autoDiscover) {
+            window.AndroidRemote.autoDiscover();
+            return;
+        }
+
         try {
             const res = await fetch('/api/discover', { method: 'POST' });
             const data = await res.json();
@@ -1472,6 +1551,108 @@
             if (scanBtnText) scanBtnText.textContent = 'Find TV';
         }
     }
+
+    // Global callbacks for Android Native App
+    window.onTvConnected = function(ip) {
+        isConnected = true;
+        needsPairing = false;
+        const dot = document.getElementById('statusDot');
+        const text = document.getElementById('statusText');
+        const banner = document.getElementById('statusBanner');
+        if (dot) dot.className = 'status-dot connected';
+        if (text) text.textContent = 'Connected';
+        if (banner) {
+            banner.className = 'banner';
+            banner.textContent = '';
+        }
+        if (ip) document.getElementById('tvIpInput').value = ip;
+        closePairingModal();
+    };
+
+    window.onSecretRequested = function() {
+        needsPairing = true;
+        isConnected = false;
+        openPairingModal();
+        document.getElementById('modalTitle').textContent = 'Enter TV Code';
+        document.getElementById('modalDesc').textContent = 'Look at your Haier TV screen and enter the 6-character code displayed:';
+        document.getElementById('pairingStartSection').style.display = 'none';
+        document.getElementById('pairingInputSection').style.display = 'flex';
+        const codeInput = document.getElementById('pairingCodeInput');
+        if (codeInput) {
+            codeInput.value = '';
+            codeInput.focus();
+        }
+    };
+
+    window.onPaired = function() {
+        needsPairing = false;
+        isConnected = true;
+        alert('Paired successfully with your Haier TV!');
+        closePairingModal();
+        checkStatus();
+    };
+
+    window.onTvDisconnected = function() {
+        isConnected = false;
+        const dot = document.getElementById('statusDot');
+        const text = document.getElementById('statusText');
+        if (dot) dot.className = 'status-dot error';
+        if (text) text.textContent = 'Offline';
+    };
+
+    window.onTvError = function(errMsg) {
+        const dot = document.getElementById('statusDot');
+        const text = document.getElementById('statusText');
+        const banner = document.getElementById('statusBanner');
+        if (dot) dot.className = 'status-dot error';
+        if (text) text.textContent = 'Offline';
+        if (banner) {
+            banner.className = 'banner banner-error active';
+            banner.innerHTML = (errMsg || 'Connection error') + ' | <a href="#" onclick="autoDiscoverTv(); return false;" style="color: #60a5fa; text-decoration: underline; font-weight: 700; margin-left: 6px;">Auto-Detect TV</a>';
+        }
+    };
+
+    window.onTvDiscovered = function(ip, msg) {
+        const banner = document.getElementById('statusBanner');
+        document.getElementById('tvIpInput').value = ip;
+        if (banner) {
+            banner.className = 'banner banner-warning active';
+            banner.textContent = msg + ' Connecting...';
+        }
+        const scanBtnText = document.getElementById('scanBtnText');
+        if (scanBtnText) scanBtnText.textContent = 'Find TV';
+        alert(msg);
+        checkStatus();
+    };
+
+    window.onTvDiscoveryFailed = function(msg) {
+        const banner = document.getElementById('statusBanner');
+        if (banner) {
+            banner.className = 'banner banner-error active';
+            banner.textContent = msg;
+        }
+        const scanBtnText = document.getElementById('scanBtnText');
+        if (scanBtnText) scanBtnText.textContent = 'Find TV';
+        alert(msg);
+    };
+
+    window.onDiscoveryStatus = function(statusMsg) {
+        const banner = document.getElementById('statusBanner');
+        if (banner) {
+            banner.className = 'banner banner-warning active';
+            banner.textContent = statusMsg;
+        }
+        const scanBtnText = document.getElementById('scanBtnText');
+        if (scanBtnText) scanBtnText.textContent = 'Scanning...';
+    };
+
+    // If running in native Android App, hide web-only elements like Mobile QR Modal button
+    window.addEventListener('DOMContentLoaded', () => {
+        if (window.AndroidRemote) {
+            const mobBtn = document.querySelector('button[onclick="openMobileModal()"]');
+            if (mobBtn) mobBtn.style.display = 'none';
+        }
+    });
 
     // Keyboard navigation from PC (when not typing in an input field)
     window.addEventListener('keydown', (e) => {

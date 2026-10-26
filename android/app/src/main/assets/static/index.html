@@ -1,0 +1,1506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Haier Smart TV Remote</title>
+    
+    <!-- PWA Settings -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#191c22">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="icon" type="image/png" sizes="192x192" href="/static/icon-192.png">
+    <link rel="apple-touch-icon" href="/static/icon-192.png">
+
+    <style>
+        :root {
+            --body-bg: #0c0e12;
+            --remote-body: #191c22;
+            --remote-edge: #262b35;
+            --remote-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05);
+            --btn-matte: #252a34;
+            --btn-matte-active: #323846;
+            --btn-border: #333a48;
+            --text-color: #e2e8f0;
+            --text-dim: #7d8b9f;
+            --accent-red: #e50914;
+            --accent-blue: #1a73e8;
+            --ring-bg: #212631;
+            --ring-border: #363e4f;
+            --ok-btn-bg: #2c3342;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: radial-gradient(circle at top, #161b26 0%, var(--body-bg) 100%);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 16px 12px;
+        }
+
+        .remote-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 340px;
+        }
+
+        /* Top status bar */
+        .status-bar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 0 4px;
+        }
+
+        .bar-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .status-pill:hover { background: rgba(255, 255, 255, 0.12); }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #888;
+        }
+        .status-dot.connected { background: #00e676; box-shadow: 0 0 10px #00e676; }
+        .status-dot.needs-pairing { background: #ffb300; box-shadow: 0 0 10px #ffb300; }
+        .status-dot.error { background: #ff3d00; box-shadow: 0 0 10px #ff3d00; }
+
+        .mobile-btn-pill {
+            background: rgba(37, 99, 235, 0.15);
+            border: 1px solid rgba(37, 99, 235, 0.4);
+            color: #60a5fa;
+            border-radius: 20px;
+            padding: 5px 10px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .mobile-btn-pill:hover { background: rgba(37, 99, 235, 0.25); }
+
+        .scan-btn-pill {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: #34d399;
+            border-radius: 20px;
+            padding: 5px 10px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .scan-btn-pill:hover { background: rgba(16, 185, 129, 0.25); }
+
+        .banner {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-size: 0.78rem;
+            display: none;
+            margin-bottom: 10px;
+            text-align: center;
+            line-height: 1.4;
+        }
+        .banner.active { display: block; }
+        .banner-warning {
+            background: rgba(255, 179, 0, 0.15);
+            border: 1px solid rgba(255, 179, 0, 0.4);
+            color: #ffca28;
+        }
+        .banner-error {
+            background: rgba(255, 61, 0, 0.15);
+            border: 1px solid rgba(255, 61, 0, 0.4);
+            color: #ff8a80;
+        }
+
+        /* Physical Remote Body */
+        .haier-remote {
+            width: 100%;
+            background: linear-gradient(180deg, #222731 0%, #171a21 40%, #13161c 100%);
+            border: 2px solid var(--remote-edge);
+            border-radius: 46px;
+            padding: 22px 18px 26px 18px;
+            box-shadow: var(--remote-shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            position: relative;
+        }
+
+        .remote-top-notch {
+            position: absolute;
+            top: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 48px;
+            height: 4px;
+            background: #090a0d;
+            border-radius: 4px;
+        }
+
+        /* Power & Mic Header Row */
+        .row-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 4px;
+        }
+
+        .btn-circle {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 1px solid var(--btn-border);
+            background: var(--btn-matte);
+            color: var(--text-color);
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.1s ease;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-circle:hover { background: var(--btn-matte-active); border-color: #485368; }
+        .btn-circle:active { transform: scale(0.92); }
+
+        .btn-power-red {
+            background: linear-gradient(145deg, #d32f2f, #9a0007) !important;
+            border: 1px solid #ff5252 !important;
+            box-shadow: 0 3px 8px rgba(211, 47, 47, 0.4) !important;
+        }
+
+        .btn-google-assistant {
+            background: #1a1e27 !important;
+            border: 1px solid #2f3747 !important;
+        }
+
+        /* Dedicated App Buttons Row */
+        .app-buttons-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .app-btn {
+            height: 44px;
+            border-radius: 22px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.12s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            padding: 0 12px;
+        }
+        .app-btn:hover { transform: translateY(-1px); filter: brightness(1.1); }
+        .app-btn:active { transform: scale(0.96); }
+
+        .app-btn-netflix { background: #ffffff; }
+        .app-btn-youtube { background: #ffffff; }
+
+        .app-buttons-row-secondary {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .app-btn-prime {
+            background: #000000;
+            border: 1px solid #00a8e1;
+        }
+
+        .app-btn-play {
+            background: #1e2430;
+            border: 1px solid #364155;
+            color: #ffffff;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        /* Utility Row: Settings / Info / Live TV */
+        .utility-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+
+        .util-btn {
+            height: 38px;
+            border-radius: 12px;
+            background: var(--btn-matte);
+            border: 1px solid var(--btn-border);
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 0.72rem;
+            font-weight: 600;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 2px;
+            transition: all 0.1s ease;
+        }
+        .util-btn:hover { background: var(--btn-matte-active); border-color: #485368; }
+        .util-btn:active { transform: scale(0.94); }
+
+        /* D-PAD Section */
+        .dpad-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 6px 0;
+        }
+
+        .dpad-ring {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, #252b37 0%, #1a1e27 100%);
+            border-radius: 50%;
+            border: 2px solid var(--ring-border);
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.5), 0 6px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        .dpad-arrow {
+            position: absolute;
+            background: transparent;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.1s ease;
+        }
+        .dpad-arrow:hover svg { fill: #60a5fa; }
+        .dpad-arrow:active { opacity: 0.6; }
+
+        .dpad-up { top: 6px; left: 50%; transform: translateX(-50%); width: 80px; height: 52px; }
+        .dpad-down { bottom: 6px; left: 50%; transform: translateX(-50%); width: 80px; height: 52px; }
+        .dpad-left { left: 6px; top: 50%; transform: translateY(-50%); width: 52px; height: 80px; }
+        .dpad-right { right: 6px; top: 50%; transform: translateY(-50%); width: 52px; height: 80px; }
+
+        .dpad-ok {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 76px;
+            height: 76px;
+            background: radial-gradient(circle, #384255 0%, #29303e 100%);
+            border: 2px solid #4a566d;
+            border-radius: 50%;
+            color: #ffffff;
+            font-size: 0.95rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.1s ease;
+        }
+        .dpad-ok:hover { border-color: #60a5fa; color: #60a5fa; }
+        .dpad-ok:active { transform: translate(-50%, -50%) scale(0.92); }
+
+        /* Nav Row */
+        .nav-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+        }
+
+        .nav-btn {
+            height: 42px;
+            border-radius: 14px;
+            background: var(--btn-matte);
+            border: 1px solid var(--btn-border);
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 0.74rem;
+            font-weight: 600;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 2px;
+            transition: all 0.1s ease;
+        }
+        .nav-btn:hover { background: var(--btn-matte-active); border-color: #485368; }
+        .nav-btn:active { transform: scale(0.94); }
+
+        /* Rockers Grid */
+        .rockers-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            padding: 0 10px;
+        }
+
+        .rocker-pill {
+            background: #1d212a;
+            border: 1.5px solid var(--btn-border);
+            border-radius: 26px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+        }
+
+        .rocker-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.25rem;
+            font-weight: 700;
+            height: 44px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background 0.1s;
+        }
+        .rocker-btn:hover { background: rgba(255, 255, 255, 0.08); color: #60a5fa; }
+        .rocker-btn:active { background: rgba(255, 255, 255, 0.16); }
+
+        .rocker-center-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            color: var(--text-dim);
+            text-align: center;
+            padding: 3px 0;
+            background: rgba(0, 0, 0, 0.35);
+        }
+
+        /* Media Row */
+        .media-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+
+        /* Keyboard & Typing Section */
+        .kb-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: #141720;
+            border: 1px solid var(--btn-border);
+            border-radius: 18px;
+            padding: 10px;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        .kb-tabs-bar {
+            display: flex;
+            gap: 6px;
+            background: #0f1218;
+            padding: 3px;
+            border-radius: 12px;
+            border: 1px solid #28303f;
+        }
+
+        .kb-tab-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            font-size: 0.74rem;
+            font-weight: 700;
+            padding: 6px;
+            border-radius: 9px;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-align: center;
+        }
+
+        .kb-tab-btn.active {
+            background: #252b37;
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        }
+
+        /* Live Typing Input Box */
+        .qwerty-display-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            background: #0b0d13;
+            border: 1px solid #323b4c;
+            border-radius: 10px;
+            padding: 4px 8px;
+        }
+
+        .qwerty-display-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #ffffff;
+            font-size: 0.88rem;
+            font-weight: 600;
+            outline: none;
+            min-width: 0;
+        }
+
+        .qwerty-display-input::placeholder {
+            color: #556277;
+            font-size: 0.78rem;
+            font-weight: 400;
+        }
+
+        .qwerty-btn-clear {
+            background: transparent;
+            border: none;
+            color: #717d91;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 4px 6px;
+        }
+        .qwerty-btn-clear:hover { color: #ff5252; }
+
+        .qwerty-btn-send {
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.74rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+        .qwerty-btn-send:hover { background: #1d4ed8; }
+
+        /* QWERTY Virtual Keyboard Layout */
+        .qwerty-board {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            width: 100%;
+        }
+
+        .kb-row {
+            display: flex;
+            justify-content: center;
+            gap: 3.5px;
+            width: 100%;
+        }
+
+        .k-key {
+            flex: 1;
+            height: 38px;
+            background: #222733;
+            border: 1px solid #353d4e;
+            border-radius: 6px;
+            color: #f1f5f9;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.08s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            touch-action: manipulation;
+        }
+
+        .k-key:hover { background: #2e3545; border-color: #505c75; }
+        .k-key:active { background: #3b465d; transform: scale(0.92); }
+
+        .k-key-special {
+            background: #181d26;
+            color: #94a3b8;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+        .k-key-special:hover { background: #232936; color: #fff; }
+
+        .k-key-shift { flex: 1.3; }
+        .k-key-shift.active {
+            background: #2563eb !important;
+            color: #ffffff !important;
+            border-color: #3b82f6 !important;
+        }
+
+        .k-key-backspace { flex: 1.3; }
+        .k-key-sym { flex: 1.3; }
+        .k-key-space { flex: 4; font-size: 0.75rem; letter-spacing: 1px; }
+        .k-key-enter {
+            background: #1e3a8a;
+            border-color: #2563eb;
+            color: #ffffff;
+            flex: 2;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .k-key-enter:hover { background: #2563eb; }
+
+        /* Number Pad Drawer */
+        .numpad-drawer {
+            display: none;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 4px;
+        }
+        .numpad-drawer.active { display: grid; }
+
+        .num-btn {
+            background: var(--btn-matte);
+            border: 1px solid var(--btn-border);
+            color: #fff;
+            border-radius: 10px;
+            padding: 10px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .num-btn:hover { background: var(--btn-matte-active); }
+
+        .haier-bottom-brand {
+            text-align: center;
+            padding-top: 4px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: 5px;
+            color: #ffffff;
+        }
+
+        .haier-submodel {
+            text-align: center;
+            font-size: 0.6rem;
+            letter-spacing: 1px;
+            color: #525e73;
+            text-transform: uppercase;
+        }
+
+        .pc-hint {
+            margin-top: 12px;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .kbd {
+            background: #1f2532;
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #cbd5e1;
+            border: 1px solid #333d52;
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+            padding: 16px;
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal {
+            background: #191c24;
+            border: 2px solid var(--btn-border);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 360px;
+            padding: 24px;
+            box-shadow: var(--remote-shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .modal-title { font-size: 1.1rem; font-weight: 800; color: #ffffff; }
+        .modal-desc { font-size: 0.82rem; color: var(--text-dim); line-height: 1.4; }
+
+        .code-input {
+            width: 100%;
+            background: #11141a;
+            border: 2px solid #3b4558;
+            border-radius: 12px;
+            padding: 12px;
+            font-size: 1.4rem;
+            font-weight: 800;
+            text-align: center;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            color: #ffffff;
+            outline: none;
+        }
+        .code-input:focus { border-color: #2563eb; }
+
+        .modal-actions { display: flex; gap: 10px; margin-top: 6px; }
+
+        .m-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+        }
+        .m-btn-primary { background: #2563eb; color: #fff; }
+        .m-btn-secondary { background: #232936; color: var(--text-dim); border: 1px solid var(--btn-border); }
+
+        .qr-wrapper {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 14px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 6px auto;
+        }
+        .qr-img { width: 170px; height: 170px; display: block; }
+        .mobile-url-box {
+            background: #11141a;
+            border: 1px solid var(--btn-border);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #60a5fa;
+            text-align: center;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+
+<div class="remote-wrapper">
+    <!-- Notice / Status Banner -->
+    <div id="statusBanner" class="banner"></div>
+
+    <!-- Status Header -->
+    <div class="status-bar">
+        <div class="bar-left">
+            <span style="font-size: 0.72rem; font-weight: 700; letter-spacing: 1px; color: var(--text-dim);">LE32K6600G</span>
+            <button class="scan-btn-pill" onclick="autoDiscoverTv()" title="Automatically find TV IP on Wi-Fi">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="12" cy="12" r="9"></circle>
+                    <path d="M12 3a9 9 0 0 1 9 9"></path>
+                </svg>
+                <span id="scanBtnText">Find TV</span>
+            </button>
+            <button class="mobile-btn-pill" onclick="openMobileModal()" title="Open on Mobile via QR / Wi-Fi">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                    <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                </svg>
+                <span>Mobile</span>
+            </button>
+        </div>
+        <div id="statusPill" class="status-pill" onclick="openPairingModal()" title="Click to view pairing settings">
+            <span id="statusDot" class="status-dot"></span>
+            <span id="statusText">Connecting...</span>
+        </div>
+    </div>
+
+    <!-- Authentic Haier Physical Remote Shell -->
+    <div class="haier-remote">
+        <div class="remote-top-notch"></div>
+
+        <!-- Row 1: Power, Source, Google Assistant, Mute -->
+        <div class="row-top">
+            <button class="btn-circle btn-power-red" onclick="triggerHaptic(); sendKey('POWER')" title="Power ON / OFF">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round">
+                    <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+                    <line x1="12" y1="2" x2="12" y2="12"></line>
+                </svg>
+            </button>
+
+            <button class="btn-circle" onclick="triggerHaptic(); sendKey('TV_INPUT')" title="Input Source">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+                    <line x1="8" y1="21" x2="16" y2="21"></line>
+                    <line x1="12" y1="17" x2="12" y2="21"></line>
+                    <polyline points="10 8 13 10 10 12"></polyline>
+                </svg>
+            </button>
+
+            <button class="btn-circle btn-google-assistant" onclick="triggerHaptic(); sendKey('VOICE_ASSIST')" title="Google Assistant">
+                <svg width="22" height="22" viewBox="0 0 24 24">
+                    <circle cx="6" cy="12" r="2.2" fill="#4285F4"/>
+                    <circle cx="11.5" cy="8.5" r="2.5" fill="#EA4335"/>
+                    <circle cx="11.5" cy="8.5" r="2.5" fill="#34A853"/>
+                    <circle cx="18" cy="12" r="3.2" fill="#FBBC05"/>
+                </svg>
+            </button>
+
+            <button class="btn-circle" onclick="triggerHaptic(); sendKey('MUTE')" title="Mute Toggle">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <line x1="23" y1="9" x2="17" y2="15"></line>
+                    <line x1="17" y1="9" x2="23" y2="15"></line>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Row 2: Official NETFLIX & YOUTUBE Dedicated Buttons -->
+        <div class="app-buttons-row">
+            <button class="app-btn app-btn-netflix" onclick="triggerHaptic(); launchApp('https://www.netflix.com/title')" title="Launch Netflix">
+                <text font-family="'Arial Black', Impact, sans-serif" font-weight="900" font-size="18" fill="#E50914" letter-spacing="1">NETFLIX</text>
+            </button>
+
+            <button class="app-btn app-btn-youtube" onclick="triggerHaptic(); launchApp('https://www.youtube.com')" title="Launch YouTube">
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <svg width="26" height="19" viewBox="0 0 68 48">
+                        <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="#FF0000"/>
+                        <polygon points="45,24 27,14 27,34" fill="#FFFFFF"/>
+                    </svg>
+                    <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 800; font-size: 0.95rem; color: #212121; letter-spacing: -0.5px;">YouTube</span>
+                </div>
+            </button>
+        </div>
+
+        <!-- Row 3: Prime Video & Google Play -->
+        <div class="app-buttons-row-secondary">
+            <button class="app-btn app-btn-prime" onclick="triggerHaptic(); launchApp('https://app.primevideo.com')" title="Launch Prime Video">
+                <span style="font-size: 0.82rem; font-weight: 800; color: #00a8e1; letter-spacing: 0.5px;">prime video</span>
+            </button>
+
+            <button class="app-btn app-btn-play" onclick="triggerHaptic(); launchApp('market://launch')" title="Google Play Store">
+                <svg width="15" height="17" viewBox="0 0 18 20">
+                    <path d="M1 1.5L10 10.5L1 19.5V1.5Z" fill="#2196F3"/>
+                    <path d="M13.5 7L10 10.5L1 1.5L11.5 5.5C12.5 6 13.5 7 13.5 7Z" fill="#4CAF50"/>
+                    <path d="M13.5 14L11.5 15.5L1 19.5L10 10.5L13.5 14Z" fill="#F44336"/>
+                    <path d="M17 10.5L13.5 7L10 10.5L13.5 14L17 10.5Z" fill="#FFEB3B"/>
+                </svg>
+                <span>Google Play</span>
+            </button>
+        </div>
+
+        <!-- Row 4: Utility Keys -->
+        <div class="utility-row">
+            <button class="util-btn" onclick="triggerHaptic(); sendKey('SETTINGS')" title="Settings">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+                <span>Settings</span>
+            </button>
+
+            <button class="util-btn" onclick="triggerHaptic(); sendKey('INFO')" title="Info / Guide">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <span>Info</span>
+            </button>
+
+            <button class="util-btn" onclick="triggerHaptic(); sendKey('TV')" title="Live TV">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect>
+                    <polyline points="17 2 12 7 7 2"></polyline>
+                </svg>
+                <span>Live TV</span>
+            </button>
+        </div>
+
+        <!-- Authentic Circular D-Pad -->
+        <div class="dpad-container">
+            <div class="dpad-ring">
+                <button class="dpad-arrow dpad-up" onclick="triggerHaptic(); sendKey('DPAD_UP')" title="Navigate Up">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="#cbd5e1">
+                        <polygon points="12,4 4,16 20,16"/>
+                    </svg>
+                </button>
+
+                <button class="dpad-arrow dpad-down" onclick="triggerHaptic(); sendKey('DPAD_DOWN')" title="Navigate Down">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="#cbd5e1">
+                        <polygon points="12,20 4,8 20,8"/>
+                    </svg>
+                </button>
+
+                <button class="dpad-arrow dpad-left" onclick="triggerHaptic(); sendKey('DPAD_LEFT')" title="Navigate Left">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="#cbd5e1">
+                        <polygon points="4,12 16,4 16,20"/>
+                    </svg>
+                </button>
+
+                <button class="dpad-arrow dpad-right" onclick="triggerHaptic(); sendKey('DPAD_RIGHT')" title="Navigate Right">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="#cbd5e1">
+                        <polygon points="20,12 8,4 8,20"/>
+                    </svg>
+                </button>
+
+                <button class="dpad-ok" onclick="triggerHaptic(); sendKey('DPAD_CENTER')" title="Select / Confirm (Enter)">
+                    OK
+                </button>
+            </div>
+        </div>
+
+        <!-- Row 5: Back, Home, Menu -->
+        <div class="nav-row">
+            <button class="nav-btn" onclick="triggerHaptic(); sendKey('BACK')" title="Back">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                    <polyline points="9 14 4 9 9 4"></polyline>
+                    <path d="M20 20v-7a4 4 0 0 0-4-4H4"></path>
+                </svg>
+                <span>Back</span>
+            </button>
+
+            <button class="nav-btn" onclick="triggerHaptic(); sendKey('HOME')" title="Android Home Screen">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                <span>Home</span>
+            </button>
+
+            <button class="nav-btn" onclick="triggerHaptic(); sendKey('MENU')" title="Menu">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+                <span>Menu</span>
+            </button>
+        </div>
+
+        <!-- Row 6: Rockers (VOL & CH) -->
+        <div class="rockers-grid">
+            <div class="rocker-pill">
+                <button class="rocker-btn" onclick="triggerHaptic(); sendKey('VOLUME_UP')" title="Volume Up">+</button>
+                <div class="rocker-center-label">VOL</div>
+                <button class="rocker-btn" onclick="triggerHaptic(); sendKey('VOLUME_DOWN')" title="Volume Down">-</button>
+            </div>
+
+            <div class="rocker-pill">
+                <button class="rocker-btn" onclick="triggerHaptic(); sendKey('CHANNEL_UP')" title="Channel Up">▲</button>
+                <div class="rocker-center-label">CH</div>
+                <button class="rocker-btn" onclick="triggerHaptic(); sendKey('CHANNEL_DOWN')" title="Channel Down">▼</button>
+            </div>
+        </div>
+
+        <!-- Row 7: Media Controls -->
+        <div class="media-row">
+            <button class="util-btn" onclick="triggerHaptic(); sendKey('MEDIA_REWIND')" title="Rewind">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="11 19 2 12 11 5 11 19"></polygon>
+                    <polygon points="22 19 13 12 22 5 22 19"></polygon>
+                </svg>
+            </button>
+            <button class="util-btn" onclick="triggerHaptic(); sendKey('MEDIA_PLAY_PAUSE')" title="Play / Pause">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+            </button>
+            <button class="util-btn" onclick="triggerHaptic(); sendKey('MEDIA_FAST_FORWARD')" title="Fast Forward">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="13 19 22 12 13 5 13 19"></polygon>
+                    <polygon points="2 19 11 12 2 5 2 19"></polygon>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Row 8: Dedicated QWERTY Keyboard & Typing Suite -->
+        <div class="kb-section">
+            <div class="kb-tabs-bar">
+                <button id="tabQwerty" class="kb-tab-btn active" onclick="switchKeyboardTab('qwerty')">QWERTY Keyboard</button>
+                <button id="tabNumbers" class="kb-tab-btn" onclick="switchKeyboardTab('numbers')">Numbers [0-9]</button>
+            </div>
+
+            <!-- Live Typing Display -->
+            <div class="qwerty-display-row">
+                <input type="text" id="kbDisplayInput" class="qwerty-display-input" placeholder="Type text or use on-screen keys..." autocomplete="off">
+                <button class="qwerty-btn-clear" onclick="clearLiveText()" title="Clear text">CLR</button>
+                <button class="qwerty-btn-send" onclick="sendFullText()" title="Send to TV Search">Send</button>
+            </div>
+
+            <!-- On-Screen QWERTY Keyboard -->
+            <div id="qwertyBoard" class="qwerty-board">
+                <!-- Numbers Row -->
+                <div class="kb-row">
+                    <button class="k-key" onclick="pressChar('1')">1</button>
+                    <button class="k-key" onclick="pressChar('2')">2</button>
+                    <button class="k-key" onclick="pressChar('3')">3</button>
+                    <button class="k-key" onclick="pressChar('4')">4</button>
+                    <button class="k-key" onclick="pressChar('5')">5</button>
+                    <button class="k-key" onclick="pressChar('6')">6</button>
+                    <button class="k-key" onclick="pressChar('7')">7</button>
+                    <button class="k-key" onclick="pressChar('8')">8</button>
+                    <button class="k-key" onclick="pressChar('9')">9</button>
+                    <button class="k-key" onclick="pressChar('0')">0</button>
+                </div>
+
+                <!-- Row 1 (Q - P) -->
+                <div class="kb-row" id="kbRow1">
+                    <!-- Populated dynamically via renderQwerty() -->
+                </div>
+
+                <!-- Row 2 (A - L) -->
+                <div class="kb-row" id="kbRow2">
+                    <!-- Populated dynamically via renderQwerty() -->
+                </div>
+
+                <!-- Row 3 (Shift, Z - M, Backspace) -->
+                <div class="kb-row" id="kbRow3">
+                    <!-- Populated dynamically via renderQwerty() -->
+                </div>
+
+                <!-- Row 4 (Symbols, Space, Enter) -->
+                <div class="kb-row">
+                    <button id="btnSymToggle" class="k-key k-key-special k-key-sym" onclick="toggleSymbols()">?123</button>
+                    <button class="k-key k-key-space" onclick="pressSpace()">SPACE</button>
+                    <button class="k-key" style="flex: 0.8;" onclick="pressChar('.')">.</button>
+                    <button class="k-key k-key-enter" onclick="pressEnter()">ENTER</button>
+                </div>
+            </div>
+
+            <!-- Standalone Number Pad Drawer -->
+            <div id="numbersBoard" class="numpad-drawer">
+                <button class="num-btn" onclick="triggerHaptic(); sendKey('1')">1</button>
+                <button class="num-btn" onclick="triggerHaptic(); sendKey('2')">2</button>
+                <button class="num-btn" onclick="triggerHaptic(); sendKey('3')">3</button>
+                <button class="num-btn" onclick="triggerHaptic(); sendKey('4')">4</button>
+                <button class="num-btn" onclick="triggerHaptic(); sendKey('5')">5</button>
+                <button class="num-btn" onclick="triggerHaptic(); sendKey('6')">6</button>
+                <button class="num-btn" onclick="triggerHaptic(); sendKey('7')">7</button>
+                <button class="num-btn" onclick="triggerHaptic(); sendKey('8')">8</button>
+                <button class="num-btn" onclick="triggerHaptic(); sendKey('9')">9</button>
+                <button class="num-btn" onclick="triggerHaptic(); sendKey('CLEAR')">CLR</button>
+                <button class="num-btn" onclick="triggerHaptic(); sendKey('0')">0</button>
+                <button class="num-btn" onclick="triggerHaptic(); sendKey('ENTER')">ENT</button>
+            </div>
+        </div>
+
+        <div class="haier-bottom-brand">Haier</div>
+        <div class="haier-submodel">Smart Android TV Remote</div>
+    </div>
+
+    <div class="pc-hint">
+        PC: <span class="kbd">Arrows</span> Move | <span class="kbd">Enter</span> OK | <span class="kbd">Esc</span> Back | <span class="kbd">Home</span> Home | <span class="kbd">+/-</span> Vol
+    </div>
+</div>
+
+<!-- Mobile Access / QR Code Modal -->
+<div id="mobileModal" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-title">Mobile Remote Access</div>
+        <div class="modal-desc">
+            Scan with your Android phone's camera, or enter this URL in your mobile browser:
+        </div>
+
+        <div class="qr-wrapper">
+            <img id="qrCodeImg" class="qr-img" src="" alt="Mobile QR Code">
+        </div>
+
+        <div id="mobileUrlText" class="mobile-url-box">http://192.168.0.104:5000</div>
+
+        <div class="modal-desc" style="font-size: 0.76rem; color: #94a3b8;">
+            Tip: In Chrome on Android, tap the three dots menu and select <strong>"Add to Home screen"</strong> or <strong>"Install app"</strong> to use it as a full-screen native Android app.
+        </div>
+
+        <div class="modal-actions">
+            <button class="m-btn m-btn-primary" onclick="closeMobileModal()">Done</button>
+        </div>
+    </div>
+</div>
+
+<!-- Pairing / Connection Modal -->
+<div id="pairingModal" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-title" id="modalTitle">TV Pairing</div>
+        <div class="modal-desc" id="modalDesc">
+            Click "Start Pairing" below. A 6-character code will appear on your Haier TV screen.
+        </div>
+
+        <div id="pairingInputSection" style="display: none; flex-direction: column; gap: 10px;">
+            <input type="text" id="pairingCodeInput" class="code-input" maxlength="6" placeholder="XXXXXX" autocomplete="off">
+            <div class="modal-actions">
+                <button class="m-btn m-btn-secondary" onclick="closePairingModal()">Cancel</button>
+                <button class="m-btn m-btn-primary" onclick="confirmPairingCode()">Confirm Code</button>
+            </div>
+        </div>
+
+        <div id="pairingStartSection" style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="tvIpInput" class="search-input" value="192.168.0.107" placeholder="TV IP Address" style="background: #11141a; border: 1px solid #333d52; border-radius: 8px;">
+                <button class="m-btn m-btn-secondary" onclick="updateTvIp()" style="flex: 0 0 70px;">Save</button>
+            </div>
+            <button class="m-btn" style="background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #34d399;" onclick="autoDiscoverTv()">
+                Auto-Scan TV on Wi-Fi
+            </button>
+            <div class="modal-actions">
+                <button class="m-btn m-btn-secondary" onclick="closePairingModal()">Close</button>
+                <button class="m-btn m-btn-primary" onclick="startPairingProcess()">Start Pairing</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let isConnected = false;
+    let needsPairing = false;
+    let localLanIp = '192.168.0.104';
+
+    // QWERTY State
+    let isShiftActive = false;
+    let isSymbolsActive = false;
+
+    const row1Letters = ['q','w','e','r','t','y','u','i','o','p'];
+    const row2Letters = ['a','s','d','f','g','h','j','k','l'];
+    const row3Letters = ['z','x','c','v','b','n','m'];
+
+    const row1Symbols = ['@','#','$','%','&','*','-','+','(',')'];
+    const row2Symbols = ['!','"','\'',':',';','/','_','=','~'];
+    const row3Symbols = ['<','>','[',']','{','}','?'];
+
+    function renderQwerty() {
+        const r1 = document.getElementById('kbRow1');
+        const r2 = document.getElementById('kbRow2');
+        const r3 = document.getElementById('kbRow3');
+
+        const letters1 = isSymbolsActive ? row1Symbols : row1Letters;
+        const letters2 = isSymbolsActive ? row2Symbols : row2Letters;
+        const letters3 = isSymbolsActive ? row3Symbols : row3Letters;
+
+        // Row 1
+        r1.innerHTML = letters1.map(ch => {
+            const display = isShiftActive && !isSymbolsActive ? ch.toUpperCase() : ch;
+            return `<button class="k-key" onclick="pressChar('${display}')">${display}</button>`;
+        }).join('');
+
+        // Row 2
+        r2.innerHTML = letters2.map(ch => {
+            const display = isShiftActive && !isSymbolsActive ? ch.toUpperCase() : ch;
+            return `<button class="k-key" onclick="pressChar('${display}')">${display}</button>`;
+        }).join('');
+
+        // Row 3
+        const shiftBtn = `<button class="k-key k-key-special k-key-shift ${isShiftActive ? 'active' : ''}" onclick="toggleShift()">${isShiftActive ? 'CAPS' : 'shift'}</button>`;
+        const backspaceBtn = `<button class="k-key k-key-special k-key-backspace" onclick="pressBackspace()">DEL</button>`;
+        
+        const row3Keys = letters3.map(ch => {
+            const display = isShiftActive && !isSymbolsActive ? ch.toUpperCase() : ch;
+            return `<button class="k-key" onclick="pressChar('${display}')">${display}</button>`;
+        }).join('');
+
+        r3.innerHTML = shiftBtn + row3Keys + backspaceBtn;
+    }
+
+    function toggleShift() {
+        triggerHaptic();
+        isShiftActive = !isShiftActive;
+        renderQwerty();
+    }
+
+    function toggleSymbols() {
+        triggerHaptic();
+        isSymbolsActive = !isSymbolsActive;
+        document.getElementById('btnSymToggle').textContent = isSymbolsActive ? 'ABC' : '?123';
+        renderQwerty();
+    }
+
+    // Switch between QWERTY and Numbers tab
+    function switchKeyboardTab(tab) {
+        triggerHaptic();
+        const tabQ = document.getElementById('tabQwerty');
+        const tabN = document.getElementById('tabNumbers');
+        const qBoard = document.getElementById('qwertyBoard');
+        const nBoard = document.getElementById('numbersBoard');
+
+        if (tab === 'qwerty') {
+            tabQ.classList.add('active');
+            tabN.classList.remove('active');
+            qBoard.style.display = 'flex';
+            nBoard.classList.remove('active');
+        } else {
+            tabN.classList.add('active');
+            tabQ.classList.remove('active');
+            qBoard.style.display = 'none';
+            nBoard.classList.add('active');
+        }
+    }
+
+    // Character Press on QWERTY
+    async function pressChar(ch) {
+        triggerHaptic();
+        const input = document.getElementById('kbDisplayInput');
+        input.value += ch;
+
+        // Send character directly to TV
+        try {
+            await fetch('/api/type_char', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ char: ch })
+            });
+        } catch (err) {
+            console.error('Error sending char:', err);
+        }
+    }
+
+    // Spacebar Press
+    async function pressSpace() {
+        triggerHaptic();
+        const input = document.getElementById('kbDisplayInput');
+        input.value += ' ';
+        try {
+            await fetch('/api/type_char', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ char: ' ' })
+            });
+        } catch (err) {
+            console.error('Error sending space:', err);
+        }
+    }
+
+    // Backspace Press
+    async function pressBackspace() {
+        triggerHaptic();
+        const input = document.getElementById('kbDisplayInput');
+        if (input.value.length > 0) {
+            input.value = input.value.slice(0, -1);
+        }
+        try {
+            await fetch('/api/type_char', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ char: 'DEL' })
+            });
+        } catch (err) {
+            console.error('Error sending del:', err);
+        }
+    }
+
+    // Enter / Search Press
+    async function pressEnter() {
+        triggerHaptic();
+        try {
+            await fetch('/api/type_char', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ char: 'ENTER' })
+            });
+        } catch (err) {
+            console.error('Error sending enter:', err);
+        }
+    }
+
+    // Clear live input display
+    function clearLiveText() {
+        triggerHaptic();
+        document.getElementById('kbDisplayInput').value = '';
+    }
+
+    // Send full text string at once
+    async function sendFullText() {
+        triggerHaptic();
+        const input = document.getElementById('kbDisplayInput');
+        const text = input.value.trim();
+        if (!text) return;
+        try {
+            await fetch('/api/text', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: text })
+            });
+        } catch (err) {
+            console.error('Error sending text:', err);
+        }
+    }
+
+    // Listen for Enter key on live input box
+    document.getElementById('kbDisplayInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            sendFullText();
+            pressEnter();
+        }
+    });
+
+    // Register Service Worker for PWA
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/service-worker.js').catch(err => {
+                console.log('SW reg error:', err);
+            });
+        });
+    }
+
+    // Touch haptic feedback
+    function triggerHaptic() {
+        if (navigator.vibrate) {
+            navigator.vibrate(25);
+        }
+    }
+
+    // Fetch TV Status
+    async function checkStatus() {
+        try {
+            const res = await fetch('/api/status');
+            const data = await res.json();
+            
+            isConnected = data.connected;
+            needsPairing = data.needs_pairing;
+            if (data.local_ip) localLanIp = data.local_ip;
+
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            const banner = document.getElementById('statusBanner');
+
+            document.getElementById('tvIpInput').value = data.tv_ip || '192.168.0.107';
+
+            if (isConnected) {
+                dot.className = 'status-dot connected';
+                text.textContent = 'Connected';
+                banner.className = 'banner';
+                banner.textContent = '';
+            } else if (needsPairing) {
+                dot.className = 'status-dot needs-pairing';
+                text.textContent = 'Pairing Required';
+                banner.className = 'banner banner-warning active';
+                banner.innerHTML = 'TV requires one-time pairing. <a href="#" onclick="openPairingModal(); return false;" style="color: inherit; text-decoration: underline; font-weight: 700;">Click here to pair</a>';
+            } else {
+                dot.className = 'status-dot error';
+                text.textContent = 'Offline';
+                banner.className = 'banner banner-error active';
+                banner.innerHTML = (data.last_error || 'Searching for TV at ' + data.tv_ip) + ' | <a href="#" onclick="autoDiscoverTv(); return false;" style="color: #60a5fa; text-decoration: underline; font-weight: 700; margin-left: 6px;">Auto-Detect TV</a>';
+            }
+        } catch (err) {
+            console.error('Failed to fetch status:', err);
+        }
+    }
+
+    // Send Key Press
+    async function sendKey(key) {
+        try {
+            const res = await fetch('/api/key', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: key })
+            });
+            const data = await res.json();
+            if (!data.success && data.error && data.error.includes('pair')) {
+                openPairingModal();
+            }
+        } catch (err) {
+            console.error('Error sending key:', err);
+        }
+    }
+
+    // Launch App
+    async function launchApp(appUrl) {
+        try {
+            await fetch('/api/launch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ app: appUrl })
+            });
+        } catch (err) {
+            console.error('Error launching app:', err);
+        }
+    }
+
+    // Mobile Modal
+    function openMobileModal() {
+        const mobileUrl = 'http://' + localLanIp + ':5000';
+        document.getElementById('mobileUrlText').textContent = mobileUrl;
+        document.getElementById('qrCodeImg').src = 'https://api.qrserver.com/v1/create-qr-code/?size=170x170&margin=0&data=' + encodeURIComponent(mobileUrl);
+        document.getElementById('mobileModal').classList.add('active');
+    }
+
+    function closeMobileModal() {
+        document.getElementById('mobileModal').classList.remove('active');
+    }
+
+    // Pairing Modal Logic
+    function openPairingModal() {
+        document.getElementById('pairingModal').classList.add('active');
+        document.getElementById('pairingStartSection').style.display = 'flex';
+        document.getElementById('pairingInputSection').style.display = 'none';
+        document.getElementById('modalTitle').textContent = 'TV Pairing';
+        document.getElementById('modalDesc').textContent = 'Click "Start Pairing" below. A 6-character code will appear on your Haier TV screen.';
+    }
+
+    function closePairingModal() {
+        document.getElementById('pairingModal').classList.remove('active');
+    }
+
+    async function startPairingProcess() {
+        document.getElementById('modalDesc').textContent = 'Connecting to TV pairing service... Please watch your TV screen.';
+        try {
+            const res = await fetch('/api/pair/start', { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById('modalTitle').textContent = 'Enter TV Code';
+                document.getElementById('modalDesc').textContent = 'Look at your Haier TV screen and enter the 6-character code displayed:';
+                document.getElementById('pairingStartSection').style.display = 'none';
+                document.getElementById('pairingInputSection').style.display = 'flex';
+                document.getElementById('pairingCodeInput').focus();
+            } else {
+                alert('Could not start pairing: ' + (data.error || 'Check if TV is turned ON.'));
+            }
+        } catch (err) {
+            alert('Pairing request failed: ' + err.message);
+        }
+    }
+
+    async function confirmPairingCode() {
+        const codeInput = document.getElementById('pairingCodeInput');
+        const code = codeInput.value.trim();
+        if (!code) {
+            alert('Please enter the code shown on the TV.');
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/pair/confirm', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: code })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert('Paired successfully! You can now control your Haier TV.');
+                closePairingModal();
+                checkStatus();
+            } else {
+                alert('Pairing failed: ' + (data.error || 'Incorrect code. Please retry.'));
+            }
+        } catch (err) {
+            alert('Pairing confirmation error: ' + err.message);
+        }
+    }
+
+    async function updateTvIp() {
+        const ip = document.getElementById('tvIpInput').value.trim();
+        if (!ip) return;
+        try {
+            await fetch('/api/ip', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ip: ip })
+            });
+            alert('TV IP updated to ' + ip + '. Reconnecting...');
+            checkStatus();
+        } catch (err) {
+            alert('Failed to update IP: ' + err.message);
+        }
+    }
+
+    // Auto-Discover TV on Local Wi-Fi
+    async function autoDiscoverTv() {
+        triggerHaptic();
+        const scanBtnText = document.getElementById('scanBtnText');
+        if (scanBtnText) scanBtnText.textContent = 'Scanning...';
+        
+        const banner = document.getElementById('statusBanner');
+        banner.className = 'banner banner-warning active';
+        banner.textContent = 'Scanning local Wi-Fi for your Haier TV... Please wait.';
+
+        try {
+            const res = await fetch('/api/discover', { method: 'POST' });
+            const data = await res.json();
+            if (data.success && data.selected_ip) {
+                document.getElementById('tvIpInput').value = data.selected_ip;
+                banner.className = 'banner banner-warning active';
+                banner.textContent = data.message + ' - Reconnecting...';
+                alert(data.message + '\n\nConnecting to your TV automatically!');
+                checkStatus();
+            } else {
+                banner.className = 'banner banner-error active';
+                banner.textContent = data.message;
+                alert(data.message);
+            }
+        } catch (err) {
+            alert('Discovery request failed: ' + err.message);
+        } finally {
+            if (scanBtnText) scanBtnText.textContent = 'Find TV';
+        }
+    }
+
+    // Keyboard navigation from PC (when not typing in an input field)
+    window.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT') return;
+
+        switch (e.key) {
+            case 'ArrowUp': e.preventDefault(); sendKey('DPAD_UP'); break;
+            case 'ArrowDown': e.preventDefault(); sendKey('DPAD_DOWN'); break;
+            case 'ArrowLeft': e.preventDefault(); sendKey('DPAD_LEFT'); break;
+            case 'ArrowRight': e.preventDefault(); sendKey('DPAD_RIGHT'); break;
+            case 'Enter': e.preventDefault(); sendKey('DPAD_CENTER'); break;
+            case 'Escape': e.preventDefault(); sendKey('BACK'); break;
+            case 'Backspace': e.preventDefault(); sendKey('BACK'); break;
+            case 'Home': e.preventDefault(); sendKey('HOME'); break;
+            case '+':
+            case '=': e.preventDefault(); sendKey('VOLUME_UP'); break;
+            case '-':
+            case '_': e.preventDefault(); sendKey('VOLUME_DOWN'); break;
+            case 'm':
+            case 'M': e.preventDefault(); sendKey('MUTE'); break;
+            case ' ': e.preventDefault(); sendKey('MEDIA_PLAY_PAUSE'); break;
+        }
+    });
+
+    // Initialize QWERTY keyboard layout
+    renderQwerty();
+    checkStatus();
+    setInterval(checkStatus, 3000);
+</script>
+
+</body>
+</html>

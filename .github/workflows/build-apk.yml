@@ -42,28 +42,33 @@ jobs:
       - name: Prepare APK Output
         run: |
           mkdir -p build-output
-          cp android/app/build/outputs/apk/debug/app-debug.apk build-output/Haier-Smart-TV-Remote-v1.0.apk
-          echo "APK build complete: build-output/Haier-Smart-TV-Remote-v1.0.apk"
+          cp android/app/build/outputs/apk/debug/app-debug.apk build-output/Haier-Smart-TV-Remote-v1.0.1.apk
+          echo "APK build complete: build-output/Haier-Smart-TV-Remote-v1.0.1.apk"
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Haier-Smart-TV-Remote-v1.0-APK
-          path: build-output/Haier-Smart-TV-Remote-v1.0.apk
+          name: Haier-Smart-TV-Remote-v1.0.1-APK
+          path: build-output/Haier-Smart-TV-Remote-v1.0.1.apk
           retention-days: 30
 
       - name: Create GitHub Release
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.0
-          name: "Haier Smart TV Remote v1.0.0 APK"
+          tag_name: v1.0.1
+          name: "Haier Smart TV Remote v1.0.1 (Standalone APK)"
           body: |
-            ### Haier Smart TV Remote v1.0.0
-            Official Android APK build for Haier Smart Android TV (LE32K6600G).
+            ### Haier Smart TV Remote v1.0.1 - Standalone Mobile Edition
+            Official standalone Android APK build for Haier Smart Android TV (LE32K6600G).
             
-            - Download `Haier-Smart-TV-Remote-v1.0.apk` below and install directly on your Android phone.
-            - Features original circular D-Pad, dedicated Netflix and YouTube shortcuts, full QWERTY keyboard, and volume/channel rockers.
-          files: build-output/Haier-Smart-TV-Remote-v1.0.apk
+            Key Highlights:
+            - Fully standalone: Connects directly from your mobile phone to your Haier TV via Wi-Fi without needing a laptop or PC.
+            - Local UI assets loaded offline from application package.
+            - Integrated native Android TV Remote Protocol v2 (TLS ports 6466 and 6467).
+            - Automatic Wi-Fi TV discovery: Finds your TV on the local network automatically.
+            - Full circular D-pad, Volume and Channel rockers, dedicated YouTube, Netflix, Prime Video, and Google Play buttons.
+            - Interactive QWERTY keyboard with real-time text input.
+          files: build-output/Haier-Smart-TV-Remote-v1.0.1.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
