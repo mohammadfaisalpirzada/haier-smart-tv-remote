@@ -425,8 +425,8 @@ class MainActivity : AppCompatActivity() {
                 val addresses = iface.inetAddresses
                 while (addresses.hasMoreElements()) {
                     val addr = addresses.nextElement()
-                    if (!addr.isLoopbackAddress && addr is InetAddress && addr.hostAddress.indexOf(':') < 0) {
-                        val host = addr.hostAddress
+                    val host = addr.hostAddress
+                    if (!addr.isLoopbackAddress && addr is InetAddress && host != null && !host.contains(':')) {
                         val parts = host.split(".")
                         if (parts.size == 4) {
                             return "${parts[0]}.${parts[1]}.${parts[2]}"
